@@ -1,0 +1,145 @@
+######################
+# LAB 5 - CLUSTERING #
+######################
+
+# In this lab, we will work with K-means clustering algorithm.
+# The data set is about crime rate or occurrence for 50 states in the US. Crimes include murder, assault, and rape.
+# The urban population (in millions) of the states, and the predefined cluster is also provided.
+# As you can see, this is a 5 dimensional data set with 4 predefined clusters.
+
+
+# For this lab, we will use ggplot2 and animation packages to visualize the clustering result. 
+# ggplot2:   a plotting package for R, powerful to produce complex multilayered graphics.
+# animation: a public package that provides functions for animations in statistics,
+# covering topics in multiple area like data mining and machine learning.
+
+#  Install package ggplot2 and animation
+install.packages("ggplot2")
+install.packages("animation")
+
+#  To use the package in an R session, we load it in an R session via library()
+library(ggplot2)
+library(animation)
+
+# Read in csv file crime_data.csv. Only two dimensions, assault and murder will be needed. 
+crime0 <- read.csv("crime_data.csv")
+
+# Note the comma below
+crime <- crime0[, c('Murder','Assault')]
+
+# Check out the distribution of data
+plot(crime, pch=16)
+
+
+# K-means is a clustering algorithm that assumes your input data is isotropic.
+# In other words, it takes features evenly important, which means invisible hyper planes
+# that separate clusters are spherical shape if in a 3-dimension space. Given this,
+# we would like to normalize original data set to avoid bias due to metrics scale of data.
+# Here, we take max/min as our approach.
+
+# Create a normalization function
+normIt <- function(feature){
+          normalized <- ((feature - min(feature)) / (max(feature) - min(feature)))
+          return (normalized)
+}
+
+# Apply the customized function to our data, then convert it to data frame
+nor_crime <- apply(crime[,c(1,2)], 2, FUN = normIt)
+nor_crime <- as.data.frame(nor_crime)
+
+
+# Try the number of clusters to be 5. kmeans() function takes input dataset and the number of clusters.
+# It is from the build-in package stats().
+c1 <- kmeans(nor_crime,5)
+class(c1)
+
+#   Analyze the result of clustering
+##  cluster:  indicates which cluster an observation belongs to.
+##  centers: a series of geographic-value pairs. 
+str(c1)
+
+
+
+#################################
+# ELBOW CURVE PLOT AND FUNCTION #
+#################################
+# Create a function that returns the value of totwithinss, and takes input dataset and number of clusters
+kmeans.totwithinss.k <- function(dataset, number_of_centers){
+                        km <- kmeans(dataset, number_of_centers)
+                        km$tot.withinss
+}
+
+
+# Call the function we customized above, kmeans.totwithinss.k
+# Test k = 3, k = 5. It can be seen that as the value of k increases, distortion decrease
+kmeans.totwithinss.k(nor_crime, 3)
+kmeans.totwithinss.k(nor_crime, 5)
+
+# We would like to know the different values of totwithinss.
+# Create a function that returns a series of totwithinss value, and take input maxk.
+# vec is a vector that contains totwithinss values associated with k from 1 to maxk
+kmeans.distortion <- function(dataset, maxk){
+  vec <- as.vector(1:maxk)
+  vec[1:maxk] <- sapply(1:maxk, kmeans.totwithinss.k, dataset = dataset)
+  return(vec)        
+}
+
+# Plot totwithinss in a graph to observe the relationship between withinss, also called distortion, and the value of k.
+#   max k = 10 
+maxk <- 10
+dis_vct <- kmeans.distortion(nor_crime, maxk)
+
+#   Elbow Curve
+plot(1:maxk,         # horizontal axis
+     dis_vct,        # vertical axis
+     type = 'b',     # curve
+     col = 'blue',
+     xlab = "Number of cluster",
+     ylab = "Total WithinSS",
+     main = "Elbow Curve Plot",
+)
+
+
+# We can observe the distortion reduce less when the number of clusters grows.
+# The value of distortion becomes stable beyond a certain threshold, which is the optimal value of k.
+# Here around k = 4 or 5, model reaches its asymptotic distortion convergence. 
+
+
+#########################
+# K-MEANS AND ANIMATION #
+#########################
+# Let us apply some animation to understand how R gave us the clustered results.
+# Function kmeans.ani() is from package animation. 
+
+#   Number of clusters, k = 4
+num_cluster = 4
+result <- kmeans.ani(nor_crime, num_cluster)
+
+# result$centers contains average geo-location, which are the centers for each clusters.
+# The second aggregate method counts the number of points in each cluster
+
+centers <- as.data.frame(result$centers)
+counts  <- aggregate(nor_crime, by = list(result$cluster), FUN = length)[, 2]
+
+# Add cluster label to crime
+crime$cluster <- result$cluster
+
+
+#################
+# VISUALIZATION #
+#################
+# We can visualize the clusters over the raw data using the ggplot() method. 
+# Base layer
+plot.crime <- ggplot(data = nor_crime, aes(x = Murder, y = Assault, color = result$cluster))
+
+# Enhance the base plot by adding additional layers to it. Execute all the statements below simultaneously.
+# Alpha: semi-transparent points
+plot.crime + geom_point(alpha = .25, size = 5) + 
+  # Cluster centers, colored black:
+  geom_point(data = centers, aes(x = Murder, y = Assault), size = 5, 
+             color = 'black') + 
+  # Cool colors for each cluster:
+  scale_color_gradientn(colours = rainbow(num_cluster)) + 
+  # Add a title, align to the center
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggtitle("K-means clusters")
