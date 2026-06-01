@@ -39,179 +39,66 @@ The lab walks through the following concepts:
 
 ## Technologies Used
 
-This project is written in **R** and uses the following packages:
+- R
+- ggplot2
+- animation
+- stats
 
-- `ggplot2` - for data visualization
-- `animation` - for visualizing the K-Means clustering process
-- `stats` - for the built-in `kmeans()` function
+## What I Learned
+
+Through this project I learned:
+
+- How unsupervised learning differs from supervised learning and when clustering is an appropriate technique.
+- Why feature normalization is critical for distance-based algorithms such as K-Means.
+- How K-Means assigns observations to clusters by minimizing the distance to cluster centroids.
+- How cluster centroids are iteratively updated until the algorithm converges.
+- How to use the Elbow Method and total within-cluster sum of squares (distortion) to estimate an appropriate number of clusters.
+- How visualization techniques can help interpret clustering results and identify natural groupings in data.
+- How K-Means can be applied to real-world segmentation problems beyond crime data, including customer segmentation, defect analysis, warranty analytics, and operational pattern discovery.
+- The importance of preprocessing and feature selection in achieving meaningful clustering outcomes.
 
 ## Dataset
 
-The script expects a CSV file named:
-
-```text
-crime_data.csv
-```
-
-The code reads the dataset using:
-
-```r
-crime0 <- read.csv("crime_data.csv")
-```
-
-Then it selects the `Murder` and `Assault` columns for clustering:
-
-```r
-crime <- crime0[, c('Murder','Assault')]
-```
+The script expects a CSV file named `crime_data.csv` and uses the Murder and Assault features for clustering.
 
 ## Workflow
 
-### 1. Load Required Packages
-
-The lab installs and loads the packages required for visualization and animation:
-
-```r
-install.packages("ggplot2")
-install.packages("animation")
-
-library(ggplot2)
-library(animation)
-```
-
-### 2. Load and Explore the Dataset
-
-The script reads the crime dataset and creates an initial scatter plot of the selected variables:
-
-```r
-plot(crime, pch=16)
-```
-
-This helps visualize the distribution of the data before clustering.
-
-### 3. Normalize the Data
-
-Because K-Means is distance-based, feature scale matters. The lab defines a custom min-max normalization function:
-
-```r
-normIt <- function(feature){
-  normalized <- ((feature - min(feature)) / (max(feature) - min(feature)))
-  return(normalized)
-}
-```
-
-The normalization step helps prevent one variable from dominating the clustering result simply because it has a larger numeric range.
-
-### 4. Run K-Means Clustering
-
-The lab initially runs K-Means using five clusters:
-
-```r
-c1 <- kmeans(nor_crime, 5)
-```
-
-It then inspects the result object to understand the cluster assignments and cluster centers.
-
-### 5. Evaluate Cluster Count with the Elbow Method
-
-The project defines helper functions to calculate total within-cluster sum of squares, also called distortion:
-
-```r
-kmeans.totwithinss.k <- function(dataset, number_of_centers){
-  km <- kmeans(dataset, number_of_centers)
-  km$tot.withinss
-}
-```
-
-The lab then evaluates values of `k` from 1 to 10 and plots the elbow curve:
-
-```r
-maxk <- 10
-dis_vct <- kmeans.distortion(nor_crime, maxk)
-
-plot(1:maxk,
-     dis_vct,
-     type = 'b',
-     col = 'blue',
-     xlab = "Number of cluster",
-     ylab = "Total WithinSS",
-     main = "Elbow Curve Plot")
-```
-
-The lab notes that the distortion begins to stabilize around **k = 4 or k = 5**, suggesting that either value may be a reasonable cluster count.
-
-### 6. Animate K-Means
-
-The project uses the `kmeans.ani()` function from the `animation` package to visualize how K-Means iteratively updates cluster centers:
-
-```r
-num_cluster = 4
-result <- kmeans.ani(nor_crime, num_cluster)
-```
-
-This helps illustrate how the algorithm converges toward final clusters.
-
-### 7. Visualize Final Clusters
-
-The final visualization uses `ggplot2` to plot the normalized murder and assault values, color-coded by cluster assignment. Cluster centers are shown as black points.
-
-```r
-plot.crime <- ggplot(data = nor_crime, aes(x = Murder, y = Assault, color = result$cluster))
-
-plot.crime + geom_point(alpha = .25, size = 5) +
-  geom_point(data = centers, aes(x = Murder, y = Assault), size = 5, color = 'black') +
-  scale_color_gradientn(colours = rainbow(num_cluster)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggtitle("K-means clusters")
-```
+1. Load required packages.
+2. Read and visualize the crime dataset.
+3. Normalize features using min-max scaling.
+4. Run K-Means clustering.
+5. Evaluate candidate values of k using the Elbow Method.
+6. Animate the clustering process.
+7. Visualize final clusters and centroids.
 
 ## Key Concepts Demonstrated
 
-This project demonstrates several foundational machine learning and data mining concepts:
-
-- Unsupervised learning
-- K-Means clustering
-- Feature scaling
-- Min-max normalization
-- Centroids / cluster centers
-- Cluster assignment
-- Total within-cluster sum of squares
-- Distortion
-- Elbow method
-- Cluster visualization
-- Iterative convergence
+- Unsupervised Learning
+- K-Means Clustering
+- Feature Scaling
+- Min-Max Normalization
+- Centroids
+- Cluster Assignment
+- Distortion Metrics
+- Elbow Method
+- Data Visualization
+- Iterative Convergence
 
 ## How to Run
 
-1. Clone this repository:
-
-```bash
-git clone https://github.com/mickemora/Clustering_K-Means_Algorithm.git
-```
-
-2. Open the project in RStudio or another R environment.
-
-3. Make sure the file `crime_data.csv` is available in the working directory.
-
+1. Clone the repository.
+2. Open the project in RStudio.
+3. Ensure `crime_data.csv` is available.
 4. Run the lab script.
-
-5. Install any missing packages when prompted.
-
-## Notes
-
-This repository is intended as a learning lab rather than a production machine learning application. It is useful for understanding the mechanics of K-Means clustering, especially the importance of normalization and choosing an appropriate number of clusters.
 
 ## Potential Enhancements
 
-Future improvements could include:
-
-- Adding the `crime_data.csv` file or linking to the data source
-- Adding sample output charts
-- Comparing results for `k = 4` and `k = 5`
-- Adding a short business interpretation of each cluster
-- Refactoring the lab into a more formal R script or R Markdown notebook
-- Adding comments about reproducibility and random seeds
+- Add sample output charts.
+- Compare results for multiple values of k.
+- Include business interpretation of cluster assignments.
+- Convert the lab into an R Markdown notebook.
+- Add reproducibility controls using random seeds.
 
 ## Summary
 
-This project applies K-Means clustering to U.S. state crime data using `Murder` and `Assault` as the main clustering dimensions. It demonstrates the end-to-end clustering workflow: data loading, normalization, cluster modeling, elbow curve analysis, animation, and final visualization.
+This project applies K-Means clustering to U.S. state crime data using Murder and Assault as the primary dimensions. It demonstrates the complete workflow of data preparation, normalization, cluster analysis, model evaluation, visualization, and interpretation.
